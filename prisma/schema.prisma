@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id_user    Int      @id @default(autoincrement())
+  nama       String
+  email      String   @unique
+  password   String
+  alamat     String?
+  no_hp      String?
+  created_at DateTime @default(now())
+
+  transaksi  Transaksi[]
+  notifikasi Notifikasi[]
+
+  @@map("users")
+}
+
+model Admin {
+  id_admin   Int      @id @default(autoincrement())
+  nama       String
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+
+  umkm        Umkm[]
+  news        News[]
+  qris_config QrisConfig[]
+
+  @@map("admins")
+}
+
+model Umkm {
+  id_umkm             Int      @id @default(autoincrement())
+  nama_umkm           String
+  pemilik             String?
+  desa                String
+  dusun               String?
+  kecamatan           String   @default("Wongsorejo")
+  kategori            String
+  status_pendampingan String   // "Sudah Pendampingan" | "Belum Pendampingan"
+  deskripsi           String?
+  logo                String?
+  kontak              String?
+  id_admin            Int
+  created_at          DateTime @default(now())
+
+  admin  Admin    @relation(fields: [id_admin], references: [id_admin])
+  produk Produk[]
+
+  @@map("umkm")
+}
+
+model Produk {
+  id_produk    Int      @id @default(autoincrement())
+  nama_produk  String
+  deskripsi    String?
+  harga        Decimal
+  stok         Int      @default(0)
+  gambar       String?
+  id_umkm      Int
+  created_at   DateTime @default(now())
+
+  umkm             Umkm               @relation(fields: [id_umkm], references: [id_umkm])
+  detail_transaksi DetailTransaksi[]
+
+  @@map("produk")
+}
+
+model Transaksi {
+  id_transaksi       Int                @id @default(autoincrement())
+  tanggal            DateTime           @default(now())
+  total_harga        Decimal
+  metode_pembayaran  MetodePembayaran
+  status             StatusTransaksi    @default(pending)
+  id_user            Int
+
+  user             User              @relation(fields: [id_user], references: [id_user])
+  detail_transaksi DetailTransaksi[]
+
+  @@map("transaksi")
+}
+
+model DetailTransaksi {
+  id_detail     Int      @id @default(autoincrement())
+  jumlah        Int
+  subtotal      Decimal
+  id_transaksi  Int
+  id_produk     Int
+  created_at    DateTime @default(now())
+
+  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi])
+  produk    Produk    @relation(fields: [id_produk], references: [id_produk])
+
+  @@map("detail_transaksi")
+}
+
+model Notifikasi {
+  id_notifikasi Int      @id @default(autoincrement())
+  pesan         String
+  status_baca   Boolean  @default(false)
+  tanggal       DateTime @default(now())
+  id_user       Int
+
+  user User @relation(fields: [id_user], references: [id_user])
+
+  @@map("notifikasi")
+}
+
+model News {
+  id_news  Int      @id @default(autoincrement())
+  judul    String
+  isi      String
+  lokasi   String?
+  tanggal  DateTime @default(now())
+  id_admin Int
+
+  admin Admin @relation(fields: [id_admin], references: [id_admin])
+
+  @@map("news")
+}
+
+model QrisConfig {
+  id                   Int      @id @default(autoincrement())
+  gambar_url           String
+  cloudinary_public_id String
+  updated_at           DateTime @updatedAt
+  id_admin             Int
+
+  admin Admin @relation(fields: [id_admin], references: [id_admin])
+
+  @@map("qris_config")
+}
+
+enum MetodePembayaran {
+  COD
+  QRIS
+}
+
+enum StatusTransaksi {
+  pending
+  diproses
+  selesai
+  dibatalkan
+}

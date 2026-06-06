@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id_user    Int      @id @default(autoincrement())
+  nama       String   @db.VarChar(100)
+  email      String   @unique @db.VarChar(150)
+  password   String   @db.VarChar(255)
+  alamat     String?  @db.Text
+  no_hp      String?  @db.VarChar(20)
+  created_at DateTime @default(now())
+
+  transaksi  Transaksi[]
+  notifikasi Notifikasi[]
+
+  @@map("users")
+}
+
+model Admin {
+  id_admin   Int      @id @default(autoincrement())
+  nama       String   @db.VarChar(100)
+  email      String   @unique @db.VarChar(150)
+  password   String   @db.VarChar(255)
+  created_at DateTime @default(now())
+
+  produk      Produk[]
+  news        News[]
+  qris_config QrisConfig[]
+
+  @@map("admins")
+}
+
+model Produk {
+  id_produk    Int      @id @default(autoincrement())
+  nama_produk  String   @db.VarChar(200)
+  deskripsi    String?  @db.Text
+  harga        Decimal  @db.Decimal(12, 2)
+  stok         Int      @default(0)
+  gambar       String?  @db.VarChar(500)
+  id_admin     Int
+  created_at   DateTime @default(now())
+
+  admin            Admin              @relation(fields: [id_admin], references: [id_admin])
+  detail_transaksi DetailTransaksi[]
+
+  @@map("produk")
+}
+
+model Transaksi {
+  id_transaksi       Int                @id @default(autoincrement())
+  tanggal            DateTime           @default(now())
+  total_harga        Decimal            @db.Decimal(14, 2)
+  metode_pembayaran  MetodePembayaran
+  status             StatusTransaksi    @default(pending)
+  id_user            Int
+
+  user             User              @relation(fields: [id_user], references: [id_user])
+  detail_transaksi DetailTransaksi[]
+
+  @@map("transaksi")
+}
+
+model DetailTransaksi {
+  id_detail     Int     @id @default(autoincrement())
+  jumlah        Int
+  subtotal      Decimal @db.Decimal(14, 2)
+  id_transaksi  Int
+  id_produk     Int
+  created_at    DateTime @default(now())
+
+  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi])
+  produk    Produk    @relation(fields: [id_produk], references: [id_produk])
+
+  @@map("detail_transaksi")
+}
+
+model Notifikasi {
+  id_notifikasi Int      @id @default(autoincrement())
+  pesan         String   @db.Text
+  status_baca   Boolean  @default(false)
+  tanggal       DateTime @default(now())
+  id_user       Int
+
+  user User @relation(fields: [id_user], references: [id_user])
+
+  @@map("notifikasi")
+}
+
+model News {
+  id_news  Int      @id @default(autoincrement())
+  judul    String   @db.VarChar(300)
+  isi      String   @db.Text
+  lokasi   String?  @db.VarChar(200)
+  tanggal  DateTime @default(now())
+  id_admin Int
+
+  admin Admin @relation(fields: [id_admin], references: [id_admin])
+
+  @@map("news")
+}
+
+model QrisConfig {
+  id                   Int      @id @default(autoincrement())
+  gambar_url           String   @db.VarChar(500)
+  cloudinary_public_id String   @db.VarChar(200)
+  updated_at           DateTime @updatedAt
+  id_admin             Int
+
+  admin Admin @relation(fields: [id_admin], references: [id_admin])
+
+  @@map("qris_config")
+}
+
+enum MetodePembayaran {
+  COD
+  QRIS
+}
+
+enum StatusTransaksi {
+  pending
+  diproses
+  selesai
+  dibatalkan
+}
