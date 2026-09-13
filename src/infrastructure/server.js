@@ -25,16 +25,37 @@ app.set('trust proxy', 1);
 // ─── SECURITY MIDDLEWARE ───────────────────────
 app.use(securityMiddleware);
 
-// ─── CORS ──────────────────────────────────────
+// ─── CORS MULTI-LAYER & DYNAMIC LOCALHOST ──────
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
+  process.env.CLIENT_URL,
+  'https://marketplace-umkm-fe.vercel.app',
+  'https://umkm-marketplace-frontend.vercel.app',
 ].filter(Boolean);
 
+const isOriginAllowed = (origin) => {
+  // Layer 1: Non-browser, mobile apps, curl, Postman (tidak ada origin header)
+  if (!origin) return true;
+  
+  // Layer 2: Whitelist domain Vercel & Production spesifik
+  if (allowedOrigins.includes(origin)) return true;
+  
+  // Layer 3: FE Lokal port APAPUN (localhost:* atau 127.0.0.1:*)
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  
+  // Layer 4: Semua preview & deployment domain Vercel
+  if (/^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(origin)) return true;
+  
+  return false;
+};
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
   credentials: true,
 }));
 
