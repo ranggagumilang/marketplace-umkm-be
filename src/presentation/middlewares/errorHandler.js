@@ -19,6 +19,18 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Foreign Key Constraint Error (Prisma P2003 / Postgres RESTRICT)
+  if (
+    err.code === 'P2003' ||
+    (err.message && (err.message.includes('foreign key constraint') || err.message.includes('violates RESTRICT setting')))
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: 'Data tidak dapat dihapus karena masih memiliki relasi aktif dengan data lain.',
+      error: 'FOREIGN_KEY_CONSTRAINT_VIOLATION'
+    });
+  }
+
   // JWT Error
   if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     return res.status(401).json({

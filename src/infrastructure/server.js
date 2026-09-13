@@ -19,6 +19,9 @@ dotenv.config();
 
 const app = express();
 
+// ─── TRUST PROXY (RENDER / REVERSE PROXY) ──────
+app.set('trust proxy', 1);
+
 // ─── SECURITY MIDDLEWARE ───────────────────────
 app.use(securityMiddleware);
 

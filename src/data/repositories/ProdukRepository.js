@@ -14,7 +14,7 @@ export class ProdukRepository extends IProdukRepository {
     const data = await prisma.produk.findMany({ include: { umkm: true } });
     return { data };
   }
-  async findById(id) { return prisma.produk.findUnique({ where: { id_produk: id }, include: { umkm: true } }); }
+  async findById(id) { return prisma.produk.findUnique({ where: { id_produk: id }, include: { umkm: true, detail_transaksi: true } }); }
   async create(data) { return prisma.produk.create({ data }); }
   async update(id, data) { return prisma.produk.update({ where: { id_produk: id }, data }); }
   async delete(id) { return prisma.produk.delete({ where: { id_produk: id } }); }
